@@ -1,0 +1,21 @@
+# --- Core app ---
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+python-dotenv==1.0.1
+
+# --- Groq client (official SDK, OpenAI-compatible) ---
+groq==0.13.1
+
+# --- Metrics ---
+prometheus-client==0.21.1
+
+# --- HTTP (used by groq SDK + for health checks) ---
+httpx==0.28.1
+
+# --- Testing ---
+pytest==8.3.4
+pytest-asyncio==0.25.0
+
+# --- Optional: caching layer (Step 7 in the guide, add when ready) ---
+redis==5.2.1
