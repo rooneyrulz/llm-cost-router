@@ -6,7 +6,7 @@ load_dotenv()
 client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
 def call_model(model_name: str, reasoning_effort: str | None, query: str):
-    kwargs = {}
+    kwargs = {"tool_choice": "none"}
     if reasoning_effort:
         kwargs["reasoning_effort"] = reasoning_effort
 

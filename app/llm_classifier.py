@@ -71,7 +71,8 @@ def _classify_llm(query: str) -> ClassificationResult:
             {"role": "system", "content": CLASSIFIER_SYSTEM_PROMPT},
             {"role": "user", "content": query},
         ],
-        # reasoning_effort="low",
+        reasoning_effort="low",
+        tool_choice="none",
         response_format=CLASSIFICATION_SCHEMA,
     )
     raw = response.choices[0].message.content
