@@ -1,8 +1,6 @@
 import re
 import sys
 from pathlib import Path
-
-# Allow direct execution (python app/classifier.py) by adding project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import Tier, MODEL_REGISTRY
