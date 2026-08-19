@@ -1,0 +1,19 @@
+[
+    { "query": "What is the capital of Japan?", "expected_tier": "cheap" },
+    {
+        "query": "Translate 'good morning' to Spanish",
+        "expected_tier": "cheap"
+    },
+    {
+        "query": "Summarize the plot of Romeo and Juliet in two sentences",
+        "expected_tier": "standard"
+    },
+    {
+        "query": "Design a database schema for a multi-tenant SaaS billing system and explain your indexing choices",
+        "expected_tier": "premium"
+    },
+    {
+        "query": "Debug this recursive function that causes a stack overflow and refactor it to be iterative",
+        "expected_tier": "premium"
+    }
+]
