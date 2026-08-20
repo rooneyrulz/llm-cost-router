@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: router-prometheus
+    extra_hosts:
+      # Ensures host.docker.internal resolves even on plain Docker Engine
+      # inside WSL2 (not just Docker Desktop, where it's automatic).
+      # "host-gateway" is a special value Docker resolves to the host's IP.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: router-grafana
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

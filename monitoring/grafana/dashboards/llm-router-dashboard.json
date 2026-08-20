@@ -1,0 +1,134 @@
+{
+    "title": "LLM Cost Router — Live Metrics",
+    "uid": "llm-cost-router",
+    "schemaVersion": 39,
+    "version": 1,
+    "refresh": "5s",
+    "time": { "from": "now-30m", "to": "now" },
+    "panels": [
+        {
+            "id": 1,
+            "title": "Total Spend (USD)",
+            "type": "stat",
+            "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(llm_request_cost_usd_total)",
+                    "legendFormat": "total"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": { "unit": "currencyUSD", "decimals": 6 },
+                "overrides": []
+            }
+        },
+        {
+            "id": 2,
+            "title": "Requests (last 1h) by Tier",
+            "type": "piechart",
+            "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(increase(llm_request_latency_seconds_count[1h])) by (tier)",
+                    "legendFormat": "{{tier}}"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "Requests (last 1h) by Model",
+            "type": "piechart",
+            "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(increase(llm_request_latency_seconds_count[1h])) by (model)",
+                    "legendFormat": "{{model}}"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "title": "Avg Cost per Request (USD)",
+            "type": "stat",
+            "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(llm_request_cost_usd_total) / sum(llm_request_latency_seconds_count)",
+                    "legendFormat": "avg cost"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": { "unit": "currencyUSD", "decimals": 6 },
+                "overrides": []
+            }
+        },
+        {
+            "id": 5,
+            "title": "Cost Rate by Tier (USD/sec)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(rate(llm_request_cost_usd_total[1m])) by (tier)",
+                    "legendFormat": "{{tier}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": { "unit": "currencyUSD" },
+                "overrides": []
+            }
+        },
+        {
+            "id": 6,
+            "title": "p95 Latency by Tier (seconds)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(llm_request_latency_seconds_bucket[5m])) by (le, tier))",
+                    "legendFormat": "{{tier}} p95"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": { "unit": "s" },
+                "overrides": []
+            }
+        },
+        {
+            "id": 7,
+            "title": "Token Throughput (tokens/sec)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(rate(llm_request_tokens_total[1m])) by (direction)",
+                    "legendFormat": "{{direction}}"
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "title": "Spend by User",
+            "type": "bargauge",
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(llm_request_cost_usd_total) by (user_id)",
+                    "legendFormat": "{{user_id}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": { "unit": "currencyUSD", "decimals": 6 },
+                "overrides": []
+            }
+        }
+    ]
+}
