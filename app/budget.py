@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+
 class BudgetTracker:
     def __init__(self, monthly_limit_usd: float = 5.0):
         self.spend: dict[str, float] = defaultdict(float)

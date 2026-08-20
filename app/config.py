@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
+
 class Tier(str, Enum):
     CHEAP = "cheap"
     STANDARD = "standard"
@@ -9,10 +10,10 @@ class Tier(str, Enum):
 
 @dataclass
 class ModelConfig:
-    name: str                  # Groq model ID
+    name: str  # Groq model ID
     tier: Tier
     reasoning_effort: str | None  # low / medium / high / None
-    input_cost_per_1m: float   # USD, from console.groq.com/docs/models
+    input_cost_per_1m: float  # USD, from console.groq.com/docs/models
     output_cost_per_1m: float
     max_context: int
 

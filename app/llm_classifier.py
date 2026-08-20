@@ -1,10 +1,11 @@
 import hashlib
 import logging
+import sys
 from functools import lru_cache
+from pathlib import Path
+
 from pydantic import BaseModel, Field
 
-import sys
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import Tier
@@ -12,11 +13,17 @@ from app.groq_client import client
 
 logger = logging.getLogger("classifier")
 
+
 # --- Output schema ---------------------------------------------------------
 class ClassificationResult(BaseModel):
     tier: str = Field(description="One of: cheap, standard, premium")
-    confidence: float = Field(description="0.0 to 1.0 confidence in this classification")
-    reasoning: str = Field(description="One short sentence explaining the classification")
+    confidence: float = Field(
+        description="0.0 to 1.0 confidence in this classification"
+    )
+    reasoning: str = Field(
+        description="One short sentence explaining the classification"
+    )
+
 
 CLASSIFICATION_SCHEMA = {
     "type": "json_schema",
@@ -54,6 +61,7 @@ Classify conservatively: if unsure between two tiers, pick the higher one."""
 # query. A simple normalized-hash LRU cache covers exact repeats cheaply;
 # swap for embedding-similarity caching if you need to catch paraphrases too.
 
+
 def _cache_key(query: str) -> str:
     normalized = " ".join(query.strip().lower().split())
     return hashlib.sha256(normalized.encode()).hexdigest()
@@ -66,7 +74,7 @@ def _classify_cached(cache_key: str, query: str) -> ClassificationResult:
 
 def _classify_llm(query: str) -> ClassificationResult:
     response = client.chat.completions.create(
-        model="openai/gpt-oss-20b",   # cheap model doing the classification itself
+        model="openai/gpt-oss-20b",  # cheap model doing the classification itself
         messages=[
             {"role": "system", "content": CLASSIFIER_SYSTEM_PROMPT},
             {"role": "user", "content": query},
@@ -99,4 +107,3 @@ def classify(query: str) -> Tier:
 if __name__ == "__main__":
     query = input("Query: ")
     print(f"Classification: {classify(query)}")
-    

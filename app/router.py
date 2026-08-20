@@ -1,6 +1,7 @@
-from app.config import MODEL_REGISTRY, Tier, ModelConfig
 from app.budget import BudgetTracker
+from app.config import MODEL_REGISTRY, ModelConfig, Tier
 from app.health import HealthChecker
+
 
 class ModelRouter:
     def __init__(self, budget_tracker: BudgetTracker, health_checker: HealthChecker):

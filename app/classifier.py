@@ -1,14 +1,44 @@
 import re
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.config import Tier, MODEL_REGISTRY
+from app.config import MODEL_REGISTRY, Tier
 
 CODE_PATTERN = re.compile(r"```|def |class |function\(|import |SELECT |async ")
-REASONING_KEYWORDS = {"analyze", "plan", "compare", "why", "explain", "design", "architect",
-                       "debug", "refactor", "optimize", "prove", "derive", "code", "build", "generate", "create", "make", "write"}
-SIMPLE_KEYWORDS = {"what is", "define", "translate", "capital of", "spell", "convert", "summarise", "summarize", "tell me"}
+REASONING_KEYWORDS = {
+    "analyze",
+    "plan",
+    "compare",
+    "why",
+    "explain",
+    "design",
+    "architect",
+    "debug",
+    "refactor",
+    "optimize",
+    "prove",
+    "derive",
+    "code",
+    "build",
+    "generate",
+    "create",
+    "make",
+    "write",
+}
+SIMPLE_KEYWORDS = {
+    "what is",
+    "define",
+    "translate",
+    "capital of",
+    "spell",
+    "convert",
+    "summarise",
+    "summarize",
+    "tell me",
+}
+
 
 def classify(query: str) -> Tier:
     q = query.lower()

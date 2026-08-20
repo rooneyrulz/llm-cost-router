@@ -1,5 +1,6 @@
-from collections import defaultdict
 import time
+from collections import defaultdict
+
 
 class HealthChecker:
     """Simple circuit breaker: trips after N consecutive failures,
