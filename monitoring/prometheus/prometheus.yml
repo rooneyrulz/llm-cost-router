@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 5s        # scrape often so the dashboard feels "real-time"
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "llm-cost-router"
+    metrics_path: /metrics
+    static_configs:
+      # host.docker.internal resolves to your Windows host from inside the
+      # container — this is how Prometheus (in Docker) reaches your FastAPI
+      # app (running natively via uvicorn on Windows).
+      - targets: ["host.docker.internal:8000"]
