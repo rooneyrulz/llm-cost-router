@@ -1,7 +1,4 @@
-import hashlib
-import logging
 import sys
-from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -10,8 +7,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import Tier
 from app.groq_client import client
+from app.logging_config import get_logger
 
-logger = logging.getLogger("classifier")
+logger = get_logger("LLM Classifier")
 
 
 # --- Output schema ---------------------------------------------------------
@@ -61,14 +59,7 @@ Classify conservatively: if unsure between two tiers, pick the higher one."""
 # query. A simple normalized-hash LRU cache covers exact repeats cheaply;
 # swap for embedding-similarity caching if you need to catch paraphrases too.
 
-
-def _cache_key(query: str) -> str:
-    normalized = " ".join(query.strip().lower().split())
-    return hashlib.sha256(normalized.encode()).hexdigest()
-
-
-@lru_cache(maxsize=2048)
-def _classify_cached(cache_key: str, query: str) -> ClassificationResult:
+def _classify_query(query: str) -> ClassificationResult:
     return _classify_llm(query)
 
 
@@ -92,18 +83,20 @@ def classify(query: str) -> Tier:
     JSON schema. Falls back to a safe default on any failure so a classifier
     outage never takes the whole router down."""
     try:
-        result = _classify_cached(_cache_key(query), query)
+        result = _classify_query(query)
         logger.info(
-            f"classified tier={result.tier} confidence={result.confidence:.2f} "
-            f"reason='{result.reasoning}'"
+            "query classified",
+            query=query,
+            tier=result.tier,
+            confidence=f"{result.confidence:.2f}",
+            reasoning=result.reasoning,
         )
         return Tier(result.tier)
-    except Exception as e:
-        logger.warning(f"LLM classification failed ({e}), defaulting to STANDARD")
+    except Exception as e:  # noqa: BLE001
+        logger.exception(
+            "query classification failed",
+            error=str(e),
+            query=query,
+            defaulting_to_tier=Tier.STANDARD.value,
+        )
         return Tier.STANDARD
-
-
-# For testing:
-if __name__ == "__main__":
-    query = input("Query: ")
-    print(f"Classification: {classify(query)}")
