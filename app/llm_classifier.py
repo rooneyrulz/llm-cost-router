@@ -1,5 +1,3 @@
-import hashlib
-import logging
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -10,8 +8,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import Tier
 from app.groq_client import client
+from app.logging_config import get_logger
 
-logger = logging.getLogger("classifier")
+logger = get_logger("LLM Classifier")
 
 
 # --- Output schema ---------------------------------------------------------
@@ -60,16 +59,30 @@ Classify conservatively: if unsure between two tiers, pick the higher one."""
 # Avoid paying the classification cost twice for the same (or near-identical)
 # query. A simple normalized-hash LRU cache covers exact repeats cheaply;
 # swap for embedding-similarity caching if you need to catch paraphrases too.
+#
+# Caching lives on _classify_llm (the raw call), NOT on classify() (the
+# public function with the try/except fallback). This matters: if we cached
+# classify()'s result, a transient failure that fell back to Tier.STANDARD
+# would get permanently cached as the "answer" for that query. lru_cache only
+# stores successful return values — an exception is never cached — so a
+# failed call is simply retried fresh on the next request instead of being
+# stuck with a bad cached fallback.
 
 
-def _cache_key(query: str) -> str:
-    normalized = " ".join(query.strip().lower().split())
-    return hashlib.sha256(normalized.encode()).hexdigest()
+def _normalize(query: str) -> str:
+    """Collapse whitespace/case differences so trivially different inputs
+    ("What is Python?" vs "what is python?") share one cache entry."""
+    return " ".join(query.strip().lower().split())
 
 
 @lru_cache(maxsize=2048)
-def _classify_cached(cache_key: str, query: str) -> ClassificationResult:
-    return _classify_llm(query)
+def _classify_llm_cached(normalized_query: str) -> ClassificationResult:
+    return _classify_llm(normalized_query)
+
+
+def _classify_query(query: str) -> ClassificationResult:
+    normalized = _normalize(query)
+    return _classify_llm_cached(normalized)
 
 
 def _classify_llm(query: str) -> ClassificationResult:
@@ -92,18 +105,24 @@ def classify(query: str) -> Tier:
     JSON schema. Falls back to a safe default on any failure so a classifier
     outage never takes the whole router down."""
     try:
-        result = _classify_cached(_cache_key(query), query)
+        cache_info_before = _classify_llm_cached.cache_info()
+        result = _classify_query(query)
+        cache_info_after = _classify_llm_cached.cache_info()
+        cache_hit = cache_info_after.hits > cache_info_before.hits
         logger.info(
-            f"classified tier={result.tier} confidence={result.confidence:.2f} "
-            f"reason='{result.reasoning}'"
+            "query classified",
+            query=query,
+            tier=result.tier,
+            confidence=f"{result.confidence:.2f}",
+            reasoning=result.reasoning,
+            cache_hit=cache_hit,
         )
         return Tier(result.tier)
     except Exception as e:
-        logger.warning(f"LLM classification failed ({e}), defaulting to STANDARD")
+        logger.exception(
+            "query classification failed",
+            error=str(e),
+            query=query,
+            defaulting_to_tier=Tier.STANDARD.value,
+        )
         return Tier.STANDARD
-
-
-# For testing:
-if __name__ == "__main__":
-    query = input("Query: ")
-    print(f"Classification: {classify(query)}")
